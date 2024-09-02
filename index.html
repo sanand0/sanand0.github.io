@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anand's Github Pages</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    crossorigin="anonymous" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+    crossorigin="anonymous" />
+  <style>
+    .card {
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Anand's Github Pages</h1>
+    <div class="row mt-4">
+      <div class="col-lg-4 col-md-6 mb-4">
+        <a
+          href="https://sanand0.github.io/whatnext/"
+          target="_blank"
+          class="text-decoration-none">
+          <div class="card text-center p-3">
+            <h5 class="card-title">What Next?</h5>
+            <p class="card-text">Prioritization matrix helping you pick what to do next</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-lg-4 col-md-6 mb-4">
+        <a
+          href="https://sanand0.github.io/whatsapp/"
+          target="_blank"
+          class="text-decoration-none">
+          <div class="card text-center p-3">
+            <h5 class="card-title">WhatsApp</h5>
+            <p class="card-text">Enter a mobile number and open a WhatsApp chat to them</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-lg-4 col-md-6 mb-4">
+        <a
+          href="https://sanand0.github.io/sgbikepark/"
+          target="_blank"
+          class="text-decoration-none">
+          <div class="card text-center p-3">
+            <h5 class="card-title">SG Bike Park</h5>
+            <p class="card-text">Find out where to park your bicycle nearby in Singapore</p>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+  </div>
+  <script>
+    window.addEventListener('error', function (event) {
+      const errorMessage = document.getElementById('error-message');
+      errorMessage.textContent = 'An error occurred: ' + event.message;
+      errorMessage.classList.remove('d-none');
+    });
+  </script>
+</body>
+
+</html>
