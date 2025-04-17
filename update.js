@@ -58,7 +58,7 @@ const html = `
               <div class="card h-100 shadow-sm">
                 <div class="card-body">
                   <h5 class="card-title">
-                    <a href="https://github.com/sanand0/${repo.name}"
+                    <a href="${repo.homepageUrl || `https://github.com/sanand0/${repo.name}`}"
                        class="text-decoration-none stretched-link">
                       ${repo.name}
                     </a>
@@ -69,7 +69,7 @@ const html = `
                 </div>
                 <div class="card-footer text-body-secondary d-flex justify-content-between">
                   <small>Created ${formatDate(repo.createdAt)}</small>
-                  <small>·</small>
+                  <small>${repo.stargazerCount} ⭐</small>
                   <small>Updated ${formatDate(repo.pushedAt)}</small>
                 </div>
               </div>

@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com/
-      - run: gh repo list sanand0 --limit 1000 --json name,createdAt,pushedAt,description,repositoryTopics,visibility > .repos.json
+      - run: gh repo list sanand0 --limit 1000 --json name,createdAt,pushedAt,description,homepageUrl,stargazerCount,repositoryTopics,visibility > .repos.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: node update.js
