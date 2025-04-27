@@ -74,7 +74,9 @@ const generateFilterSection = (title, id, options, type) => `
     </div>
   </div>`;
 
-const generateRepoCard = (repo) => `
+const generateRepoCard = (repo, icons) => {
+  const iconUrl = icons[repo.name];
+  return `
   <div class="col repo-card"
        data-topics='${JSON.stringify(repo.repositoryTopics?.map((t) => t.name) || [])}'
        data-updated="${repo.pushedAt}"
@@ -82,7 +84,8 @@ const generateRepoCard = (repo) => `
        data-name="${repo.name}">
     <div class="card h-100 shadow-sm">
       <div class="card-body">
-        <h5 class="card-title">
+        <h5 class="card-title d-flex align-items-center gap-2">
+          ${iconUrl ? `<img src="${iconUrl}" alt="" width="24" height="24">` : ''}
           <a href="${repo.homepageUrl || `https://github.com/sanand0/${repo.name}`}"
              class="text-decoration-none stretched-link">
             ${repo.name}
@@ -102,9 +105,11 @@ const generateRepoCard = (repo) => `
       </div>
     </div>
   </div>`;
+};
 
 // Main execution
 const repos = processRepos(JSON.parse(readFileSync(".repos.json", "utf-8")));
+const icons = JSON.parse(readFileSync("icons.json", "utf-8"));
 const allTopics = extractTopics(repos);
 const updateYears = getYearOptions(repos.map((r) => r.pushedAt));
 const createYears = getYearOptions(repos.map((r) => r.createdAt));
@@ -122,7 +127,7 @@ const html = `
     </div>
     <div class="col-md-9">
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-        ${repos.map(generateRepoCard).join("")}
+        ${repos.map(repo => generateRepoCard(repo, icons)).join("")}
       </div>
     </div>
   </div>`;

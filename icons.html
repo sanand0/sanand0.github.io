@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repo Icon Selector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="p-6 font-sans">
+  <h1 class="text-2xl font-bold mb-4">Repo Icon Selector</h1>
+  <div id="repoContainer" class="space-y-6"></div>
+  <button id="exportBtn" class="mt-6 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Export Selection</button>
+
+  <script>
+    let repoKeywords = {};
+    let selection = JSON.parse(localStorage.getItem('repoIcons') || '{}');
+    let customKeywords = JSON.parse(localStorage.getItem('repoCustomKeywords') || '{}');
+
+    function saveCustom() {
+      localStorage.setItem('repoCustomKeywords', JSON.stringify(customKeywords));
+    }
+
+    function renderRepos() {
+      const container = document.getElementById('repoContainer');
+      container.innerHTML = '';
+      Object.keys(repoKeywords).forEach(repo => {
+        const div = document.createElement('div');
+        div.setAttribute('data-repo', repo);
+        div.className = 'flex items-center';
+
+        // Selected icon placeholder
+        if (selection[repo]) {
+          const iconImg = document.createElement('img');
+          iconImg.src = selection[repo];
+          iconImg.className = 'w-6 h-6 mr-2';
+          div.appendChild(iconImg);
+        } else {
+          const spacer = document.createElement('div');
+          spacer.className = 'w-6 h-6 mr-2';
+          div.appendChild(spacer);
+        }
+
+        // Repo name
+        const title = document.createElement('h2');
+        title.textContent = repo;
+        title.className = 'text-blue-600 cursor-pointer text-lg mx-2';
+        title.addEventListener('click', () => loadIcons(repo, div));
+        div.appendChild(title);
+
+        // Display keywords list
+        const currentKeywords = customKeywords[repo] || repoKeywords[repo];
+        const kwSpan = document.createElement('span');
+        kwSpan.className = 'text-gray-500 text-sm';
+        kwSpan.textContent = currentKeywords.join(', ');
+        div.appendChild(kwSpan);
+
+        // Edit keywords button
+        const editDiv = document.createElement('div');
+        editDiv.className = 'ml-auto';
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit keyword';
+        editBtn.className = 'bg-gray-200 text-gray-800 px-2 py-1 rounded text-sm hover:bg-gray-300';
+        editBtn.addEventListener('click', () => enableEdit(repo, div, kwSpan));
+        editDiv.appendChild(editBtn);
+        div.appendChild(editDiv);
+
+        container.appendChild(div);
+      });
+    }
+
+    function enableEdit(repo, container, kwSpan) {
+      const editDiv = container.querySelector('.ml-auto');
+      editDiv.innerHTML = '';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'border rounded px-2 py-1 text-sm';
+      const vals = customKeywords[repo] || repoKeywords[repo];
+      input.value = vals.join(', ');
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save';
+      saveBtn.className = 'bg-green-500 text-white px-2 py-1 rounded text-sm ml-2 hover:bg-green-600';
+      saveBtn.addEventListener('click', async () => {
+        const newList = input.value.split(',').map(s => s.trim()).filter(s => s);
+        customKeywords[repo] = newList;
+        saveCustom();
+        // Re-render keywords text
+        kwSpan.textContent = newList.join(', ');
+        // Immediately reload icons
+        const repoDiv = document.querySelector(`.repo[data-repo="${repo}"]`);
+        // Remove existing grid if any
+        const existing = repoDiv.querySelector('.icon-grid');
+        if (existing) existing.remove();
+        await loadIcons(repo, repoDiv);
+        // Restore edit button
+        editDiv.innerHTML = '';
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit keyword';
+        editBtn.className = 'bg-gray-200 text-gray-800 px-2 py-1 rounded text-sm hover:bg-gray-300';
+        editBtn.addEventListener('click', () => enableEdit(repo, repoDiv, kwSpan));
+        editDiv.appendChild(editBtn);
+      });
+      editDiv.appendChild(input);
+      editDiv.appendChild(saveBtn);
+    }
+
+    async function loadIcons(repo, container) {
+      const existing = container.querySelector('.icon-grid');
+      if (existing) { existing.remove(); return; }
+      const grid = document.createElement('div');
+      grid.className = 'icon-grid flex flex-wrap gap-2 mt-2';
+      container.appendChild(grid);
+
+      const kws = customKeywords[repo] || repoKeywords[repo];
+      for (const kw of kws) {
+        const res = await fetch(`https://api.iconify.design/search?query=${encodeURIComponent(kw)}&limit=5`);
+        const data = await res.json();
+        data.icons.forEach(iconName => {
+          const [prefix, name] = iconName.split(':');
+          const url = `https://api.iconify.design/${prefix}/${name}.svg`;
+          const item = document.createElement('div');
+          item.className = 'icon-item w-12 h-12 p-1 border-2 border-transparent cursor-pointer flex items-center justify-center';
+          const img = document.createElement('img');
+          img.src = url; img.width = 40; img.height = 40;
+          if (selection[repo] === url) item.classList.add('border-blue-500');
+          item.addEventListener('click', () => {
+            grid.querySelectorAll('.icon-item').forEach(el => el.classList.remove('border-blue-500'));
+            item.classList.add('border-blue-500');
+            selection[repo] = url;
+            localStorage.setItem('repoIcons', JSON.stringify(selection));
+            renderRepos();
+          });
+          item.appendChild(img);
+          grid.appendChild(item);
+        });
+      }
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(selection, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'selection.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    async function init() {
+      const res = await fetch('./.repos.json');
+      const data = await res.json();
+      data.forEach(r => repoKeywords[r.name] = (r.repositoryTopics || []).map(t => t.name));
+      renderRepos();
+    }
+    init();
+  </script>
+</body>
+
+</html>
