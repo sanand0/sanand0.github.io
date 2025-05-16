@@ -3,7 +3,11 @@ import { readFileSync, writeFileSync } from "fs";
 // Data processing functions
 const processRepos = (repos) =>
   repos
-    .filter((repo) => repo.visibility === "PUBLIC" && repo.repositoryTopics?.length > 0)
+    .filter((repo) => repo.visibility === "PUBLIC")
+    .map((repo) => {
+      if (!repo.repositoryTopics?.length) repo.repositoryTopics = [{ name: "(other)" }];
+      return repo;
+    })
     .sort((a, b) => new Date(b.pushedAt) - new Date(a.pushedAt));
 
 const extractTopics = (repos) => [...new Set(repos.flatMap((repo) => repo.repositoryTopics?.map((t) => t.name) || []))];
@@ -85,7 +89,7 @@ const generateRepoCard = (repo, icons) => {
     <div class="card h-100 shadow-sm">
       <div class="card-body">
         <h5 class="card-title d-flex align-items-center gap-2">
-          ${iconUrl ? `<img src="${iconUrl}" alt="" width="24" height="24">` : ''}
+          ${iconUrl ? `<img src="${iconUrl}" alt="" width="24" height="24">` : ""}
           <a href="${repo.homepageUrl || `https://github.com/sanand0/${repo.name}`}"
              class="text-decoration-none stretched-link">
             ${repo.name}
@@ -127,7 +131,7 @@ const html = `
     </div>
     <div class="col-md-9">
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-        ${repos.map(repo => generateRepoCard(repo, icons)).join("")}
+        ${repos.map((repo) => generateRepoCard(repo, icons)).join("")}
       </div>
     </div>
   </div>`;
