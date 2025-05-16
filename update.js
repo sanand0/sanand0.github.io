@@ -80,17 +80,18 @@ const generateFilterSection = (title, id, options, type) => `
 
 const generateRepoCard = (repo, icons) => {
   const iconUrl = icons[repo.name];
-  return `
+  const url = `https://github.com/sanand0/${repo.name}`;
+  return /* html */ `
   <div class="col repo-card"
        data-topics='${JSON.stringify(repo.repositoryTopics?.map((t) => t.name) || [])}'
        data-updated="${repo.pushedAt}"
        data-created="${repo.createdAt}"
        data-name="${repo.name}">
     <div class="card h-100 shadow-sm">
-      <div class="card-body">
+      <div class="card-body position-relative">
         <h5 class="card-title d-flex align-items-center gap-2">
           ${iconUrl ? `<img src="${iconUrl}" alt="" width="24" height="24">` : ""}
-          <a href="${repo.homepageUrl || `https://github.com/sanand0/${repo.name}`}"
+          <a href="${repo.homepageUrl || url}"
              class="text-decoration-none stretched-link">
             ${repo.name}
           </a>
@@ -102,10 +103,10 @@ const generateRepoCard = (repo, icons) => {
             .join("")}
         </div>
       </div>
-      <div class="card-footer text-body-secondary d-flex justify-content-between">
-        <small>Created ${formatDate(repo.createdAt)}</small>
-        <small>${repo.stargazerCount} ⭐</small>
-        <small>Updated ${formatDate(repo.pushedAt)}</small>
+      <div class="card-footer text-body-secondary d-flex justify-content-between position-relative">
+        <a class="small text-decoration-none" href="${url}">Created ${formatDate(repo.createdAt)}</a>
+        <a class="small text-decoration-none text-nowrap" href="${url}/stargazers">${repo.stargazerCount} ⭐</a>
+        <a class="small text-decoration-none text-end" href="${url}">Updated ${formatDate(repo.pushedAt)}</a>
       </div>
     </div>
   </div>`;
@@ -130,7 +131,7 @@ const html = `
       </div>
     </div>
     <div class="col-md-9">
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-4">
         ${repos.map((repo) => generateRepoCard(repo, icons)).join("")}
       </div>
     </div>
