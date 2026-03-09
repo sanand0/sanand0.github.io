@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from "fs";
 
-// Data processing functions
+const escHtml = (s) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 const processRepos = (repos) =>
   repos
     .filter((repo) => repo.visibility === "PUBLIC")
@@ -10,131 +12,118 @@ const processRepos = (repos) =>
     })
     .sort((a, b) => new Date(b.pushedAt) - new Date(a.pushedAt));
 
-const extractTopics = (repos) => [...new Set(repos.flatMap((repo) => repo.repositoryTopics?.map((t) => t.name) || []))];
+const extractTopics = (repos) =>
+  [...new Set(repos.flatMap((repo) => repo.repositoryTopics?.map((t) => t.name) || []))];
 
-const getYearOptions = (dates) => [...new Set(dates.map((d) => new Date(d).getFullYear()))].sort((a, b) => b - a);
+const getYearOptions = (dates) =>
+  [...new Set(dates.map((d) => new Date(d).getFullYear()))].sort((a, b) => b - a);
 
-const formatDate = (date) => new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short" });
-
-// HTML generation functions
-const generateFilterSection = (title, id, options, type) => `
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button ${id === "topicFilter" ? "" : "collapsed"}" type="button"
-              data-bs-toggle="collapse" data-bs-target="#${id}">
-        ${title}
-      </button>
-    </h2>
-    <div id="${id}" class="accordion-collapse collapse ${id === "topicFilter" ? "show" : ""}">
-      <div class="accordion-body">
-        ${
-          type === "topic"
-            ? options
-                .map(
-                  (topic) => `
-              <div class="form-check">
-                <input class="form-check-input topic-filter" type="checkbox" value="${topic}" id="topic-${topic}">
-                <label class="form-check-label d-flex justify-content-between" for="topic-${topic}">
-                  ${topic} <span class="count badge text-bg-secondary rounded-pill"></span>
-                </label>
-              </div>
-            `
-                )
-                .join("")
-            : `
-            <div class="form-check">
-              <input class="form-check-input ${type}-filter" type="radio" name="${type}" value="week" id="${type}-week">
-              <label class="form-check-label d-flex justify-content-between" for="${type}-week">
-                This Week <span class="count badge text-bg-secondary rounded-pill"></span>
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input ${type}-filter" type="radio" name="${type}" value="month" id="${type}-month">
-              <label class="form-check-label d-flex justify-content-between" for="${type}-month">
-                This Month <span class="count badge text-bg-secondary rounded-pill"></span>
-              </label>
-            </div>
-            ${options
-              .map(
-                (year) => `
-              <div class="form-check">
-                <input class="form-check-input ${type}-filter" type="radio" name="${type}"
-                       value="${year}" id="${type}-${year}">
-                <label class="form-check-label d-flex justify-content-between" for="${type}-${year}">
-                  ${year} <span class="count badge text-bg-secondary rounded-pill"></span>
-                </label>
-              </div>
-            `
-              )
-              .join("")}
-            <div class="form-check">
-              <input class="form-check-input ${type}-filter" type="radio" name="${type}"
-                     value="all" id="${type}-all" checked>
-              <label class="form-check-label" for="${type}-all">All Time</label>
-            </div>
-          `
-        }
-      </div>
-    </div>
-  </div>`;
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short" });
 
 const generateRepoCard = (repo, icons) => {
   const iconUrl = icons[repo.name];
   const url = `https://github.com/sanand0/${repo.name}`;
-  return /* html */ `
+  const homepageUrl = repo.homepageUrl || url;
+  const topics = repo.repositoryTopics || [];
+  const desc = escHtml(repo.description || "");
+
+  return `
   <div class="col repo-card"
-       data-topics='${JSON.stringify(repo.repositoryTopics?.map((t) => t.name) || [])}'
+       data-topics='${JSON.stringify(topics.map((t) => t.name))}'
        data-updated="${repo.pushedAt}"
        data-created="${repo.createdAt}"
-       data-name="${repo.name}">
-    <div class="card h-100 shadow-sm">
-      <div class="card-body position-relative">
-        <h5 class="card-title d-flex align-items-center gap-2">
-          ${iconUrl ? `<img src="${iconUrl}" alt="" width="24" height="24">` : ""}
-          <a href="${repo.homepageUrl || url}"
-             class="text-decoration-none stretched-link">
-            ${repo.name}
-          </a>
-        </h5>
-        ${repo.description ? `<p class="card-text text-body-secondary mb-2">${repo.description}</p>` : ""}
-        <div class="d-flex flex-wrap gap-1">
-          ${repo.repositoryTopics
-            ?.map((topic) => `<span class="badge text-bg-secondary">${topic.name}</span>`)
-            .join("")}
+       data-name="${repo.name.toLowerCase()}"
+       data-desc="${escHtml((repo.description || "").toLowerCase())}"
+       data-stars="${repo.stargazerCount}">
+    <div class="card">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-start gap-2 mb-2">
+          ${iconUrl ? `<img src="${iconUrl}" class="repo-icon mt-1" alt="" loading="lazy" width="28" height="28">` : ""}
+          <div class="flex-grow-1 min-w-0">
+            <a href="${homepageUrl}" class="card-name text-truncate">${escHtml(repo.name)}</a>
+            ${desc ? `<p class="card-desc mb-0">${desc}</p>` : ""}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-1 mt-2">
+          ${topics.map((t) => `<button class="topic-pill" data-topic="${escHtml(t.name)}">${escHtml(t.name)}</button>`).join("")}
         </div>
       </div>
-      <div class="card-footer text-body-secondary d-flex justify-content-between position-relative">
-        <a class="small text-decoration-none" href="${url}">Created ${formatDate(repo.createdAt)}</a>
-        <a class="small text-decoration-none text-nowrap" href="${url}/stargazers">${repo.stargazerCount} ⭐</a>
-        <a class="small text-decoration-none text-end" href="${url}">Updated ${formatDate(repo.pushedAt)}</a>
+      <div class="card-footer d-flex justify-content-between align-items-center gap-1">
+        <a href="${url}" class="text-nowrap">${formatDate(repo.createdAt)}</a>
+        <a href="${url}/stargazers" class="star-count"><i class="bi bi-star-fill"></i> ${repo.stargazerCount}</a>
+        <a href="${url}" class="text-nowrap text-end">${formatDate(repo.pushedAt)}</a>
       </div>
     </div>
   </div>`;
 };
 
-// Main execution
+// ── Main ──────────────────────────────────────────────────────────────────────
 const repos = processRepos(JSON.parse(readFileSync(".repos.json", "utf-8")));
 const icons = JSON.parse(readFileSync("icons.json", "utf-8"));
 const allTopics = extractTopics(repos);
 const updateYears = getYearOptions(repos.map((r) => r.pushedAt));
 const createYears = getYearOptions(repos.map((r) => r.createdAt));
+const totalStars = repos.reduce((s, r) => s + r.stargazerCount, 0);
 
 const html = `
-  <div class="row g-5">
-    <div class="col-md-3">
-      <div class="position-sticky" style="top: 2rem;">
-        <div class="accordion" id="filters">
-          ${generateFilterSection("Topics", "topicFilter", allTopics, "topic")}
-          ${generateFilterSection("Last Updated", "updatedFilter", updateYears, "updated")}
-          ${generateFilterSection("Created", "createdFilter", createYears, "created")}
-        </div>
-      </div>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 stats-row">
+    <div>
+      <span id="visible-count">${repos.length}</span>
+      <span class="text-body-secondary"> of ${repos.length} projects &nbsp;·&nbsp; </span>
+      <span class="total-stars"><i class="bi bi-star-fill me-1"></i>${totalStars.toLocaleString()} stars</span>
     </div>
-    <div class="col-md-9">
-      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-4">
-        ${repos.map((repo) => generateRepoCard(repo, icons)).join("")}
+    <button class="btn btn-sm clear-btn" id="clear-filters" style="display:none">
+      <i class="bi bi-x-circle"></i> Clear filters
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="d-flex flex-wrap align-items-center gap-2 filter-controls mb-2">
+      <div class="search-wrap" style="min-width:200px;max-width:280px;flex:1 1 200px">
+        <i class="bi bi-search"></i>
+        <input type="search" class="form-control search-input" id="search-input"
+               placeholder="Search projects…" autocomplete="off" aria-label="Search projects">
       </div>
+      <select class="pill-select" id="sort-select" aria-label="Sort by">
+        <option value="updated">⟳ Recent</option>
+        <option value="stars">★ Stars</option>
+        <option value="created">⊕ Created</option>
+        <option value="name">A–Z Name</option>
+      </select>
+      <select class="pill-select" id="updated-select" aria-label="Filter by update date">
+        <option value="all">Updated: Any</option>
+        <option value="week">This week</option>
+        <option value="month">This month</option>
+        ${updateYears.map((y) => `<option value="${y}">${y}</option>`).join("")}
+      </select>
+      <select class="pill-select" id="created-select" aria-label="Filter by creation date">
+        <option value="all">Created: Any</option>
+        ${createYears.map((y) => `<option value="${y}">${y}</option>`).join("")}
+      </select>
     </div>
+    <div class="chip-row" id="chip-row" role="group" aria-label="Filter by topic">
+      <button class="chip is-active" data-topic="" aria-pressed="true">
+        All <span class="chip-count">${repos.length}</span>
+      </button>
+      ${allTopics
+        .map(
+          (t) => `<button class="chip" data-topic="${escHtml(t)}" aria-pressed="false">
+        ${escHtml(t)} <span class="chip-count"></span>
+      </button>`
+        )
+        .join("")}
+    </div>
+  </div>
+
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3 py-3" id="card-grid">
+    ${repos.map((repo) => generateRepoCard(repo, icons)).join("")}
+  </div>
+
+  <div id="empty-state" style="display:none">
+    <i class="bi bi-search"></i>
+    <p class="mt-3 mb-1 fw-semibold fs-5">No matching projects</p>
+    <p class="mb-0 small">Try different filters or clear your search</p>
   </div>`;
 
 writeFileSync("index.html", readFileSync("template.html", "utf-8").replace(/<!-- #DEMOS# -->/, html));

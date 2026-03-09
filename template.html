@@ -4,159 +4,454 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Anand's Code</title>
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMi03LTctMiA3LTJaIi8+PC9zdmc+"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      crossorigin="anonymous"
-    />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMi03LTctMiA3LTJaIi8+PC9zdmc+" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <style>
+      /* ── Design tokens ── */
+      :root {
+        --brand: #6366f1;
+        --brand-hover: #4f46e5;
+        --star: #f59e0b;
+        --radius: 12px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+        --shadow-md: 0 6px 20px rgba(0,0,0,.11), 0 2px 6px rgba(0,0,0,.06);
+        --t: .17s ease;
+        --navbar-h: 56px;
+      }
+
+      /* ── Base ── */
+      body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+      /* ── Navbar ── */
+      .app-nav {
+        background: #0f172a !important;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+        position: sticky;
+        top: 0;
+        z-index: 300;
+      }
+      .navbar-brand {
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: -.015em;
+        background: linear-gradient(130deg, #a5b4fc, #c7d2fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+      }
+      .theme-btn {
+        border-radius: 999px !important;
+        font-size: .8125rem;
+        padding: .25rem .85rem !important;
+      }
+
+      /* ── Stats row ── */
+      .stats-row {
+        padding: .7rem 0 .4rem;
+        font-size: .875rem;
+        color: var(--bs-secondary-color);
+      }
+      #visible-count { font-weight: 700; color: var(--bs-body-color); }
+      .total-stars { font-weight: 600; color: var(--star); }
+      .clear-btn {
+        border: 1.5px solid var(--bs-border-color) !important;
+        border-radius: 999px !important;
+        font-size: .8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        background: transparent;
+        color: var(--bs-body-color);
+      }
+      .clear-btn:hover { border-color: var(--brand) !important; color: var(--brand) !important; }
+
+      /* ── Sticky filter bar ── */
+      .filter-bar {
+        position: sticky;
+        top: var(--navbar-h);
+        z-index: 200;
+        background: var(--bs-body-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: .6rem 0;
+        transition: box-shadow var(--t);
+      }
+      .filter-bar.shadowed { box-shadow: 0 4px 20px rgba(0,0,0,.09); }
+
+      /* Search */
+      .search-wrap { position: relative; }
+      .search-wrap .bi-search {
+        position: absolute; left: .7rem; top: 50%;
+        transform: translateY(-50%);
+        color: var(--bs-secondary-color);
+        font-size: .8rem;
+        pointer-events: none;
+      }
+      .search-input {
+        padding-left: 2rem !important;
+        border-radius: 999px !important;
+        border: 1.5px solid var(--bs-border-color) !important;
+        background: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        font-size: .8125rem;
+        height: 34px;
+        transition: border-color var(--t), box-shadow var(--t);
+      }
+      .search-input:focus {
+        border-color: var(--brand) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,.15) !important;
+        outline: none;
+      }
+
+      /* Pill selects */
+      .pill-select {
+        border-radius: 999px;
+        border: 1.5px solid var(--bs-border-color);
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        font-size: .8125rem;
+        padding: .2rem .75rem;
+        height: 34px;
+        cursor: pointer;
+        appearance: auto;
+        transition: border-color var(--t), color var(--t);
+        white-space: nowrap;
+      }
+      .pill-select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+      .pill-select.is-active { border-color: var(--brand); color: var(--brand); }
+
+      /* Topic chips */
+      .chip-row {
+        display: flex;
+        gap: .35rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: .2rem 0 .1rem;
+        -webkit-overflow-scrolling: touch;
+      }
+      .chip-row::-webkit-scrollbar { display: none; }
+      .chip {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        padding: .2rem .65rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--bs-border-color);
+        background: transparent;
+        color: var(--bs-secondary-color);
+        font-size: .775rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background var(--t), border-color var(--t), color var(--t);
+        line-height: 1.6;
+        white-space: nowrap;
+      }
+      .chip:hover { border-color: var(--brand); color: var(--brand); background: rgba(99,102,241,.06); }
+      .chip.is-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .chip .chip-count {
+        font-size: .68rem;
+        padding: .1em .42em;
+        border-radius: 999px;
+        background: rgba(255,255,255,.22);
+        line-height: 1.5;
+      }
+      .chip:not(.is-active) .chip-count { background: rgba(99,102,241,.13); color: var(--brand); }
+
+      /* ── Cards ── */
+      .repo-card[hidden] { display: none !important; }
+
+      .repo-card .card {
+        border-radius: var(--radius) !important;
+        border: 1.5px solid var(--bs-border-color) !important;
+        box-shadow: var(--shadow-sm);
+        background: var(--bs-body-bg);
+        transition: box-shadow var(--t), border-color var(--t), transform var(--t);
+        height: 100%;
+        overflow: hidden;
+      }
+      .repo-card .card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--brand) !important;
+        transform: translateY(-2px);
+      }
+      .repo-icon {
+        width: 28px; height: 28px;
+        object-fit: contain;
+        border-radius: 6px;
+        flex-shrink: 0;
+      }
+      .card-name {
+        font-size: .9rem;
+        font-weight: 600;
+        color: var(--bs-body-color);
+        text-decoration: none;
+        letter-spacing: -.01em;
+        line-height: 1.3;
+        transition: color var(--t);
+        display: block;
+      }
+      .card-name:hover { color: var(--brand); }
+      .card-desc {
+        font-size: .8rem;
+        color: var(--bs-secondary-color);
+        line-height: 1.5;
+        margin-top: .2rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .topic-pill {
+        display: inline-flex;
+        align-items: center;
+        font-size: .6875rem;
+        font-weight: 500;
+        padding: .15rem .5rem;
+        border-radius: 999px;
+        border: none;
+        background: rgba(99,102,241,.1);
+        color: var(--brand);
+        cursor: pointer;
+        line-height: 1.6;
+        transition: background var(--t), color var(--t);
+        white-space: nowrap;
+      }
+      .topic-pill:hover { background: var(--brand); color: #fff; }
+      [data-bs-theme="dark"] .topic-pill { background: rgba(99,102,241,.2); color: #a5b4fc; }
+      [data-bs-theme="dark"] .topic-pill:hover { background: var(--brand); color: #fff; }
+
+      .star-count {
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--star);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: opacity var(--t);
+      }
+      .star-count:hover { opacity: .8; color: var(--star); }
+
+      .card-footer {
+        background: transparent !important;
+        border-top: 1px solid var(--bs-border-color) !important;
+        padding: .45rem .85rem;
+        font-size: .74rem;
+        color: var(--bs-secondary-color);
+      }
+      .card-footer a {
+        color: var(--bs-secondary-color);
+        text-decoration: none;
+        transition: color var(--t);
+      }
+      .card-footer a:hover { color: var(--brand); }
+
+      /* ── Empty state ── */
+      #empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        color: var(--bs-secondary-color);
+      }
+      #empty-state .bi { font-size: 2.5rem; opacity: .2; display: block; }
+
+      /* ── Page fade-in ── */
+      @keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      #card-grid { animation: fade-in .35s ease both; }
+
+      /* ── Responsive ── */
+      @media (max-width: 576px) {
+        .filter-controls { flex-wrap: wrap; }
+        .search-wrap { flex: 1 1 100% !important; min-width: 0 !important; max-width: none !important; }
+      }
+    </style>
   </head>
 
   <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+    <nav class="navbar navbar-expand-lg app-nav" data-bs-theme="dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="https://s-anand.net/">Anand's Code</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
+        <a class="navbar-brand" href="https://s-anand.net/">
+          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMiA3LTctMiA3LTJaIi8+PC9zdmc+" width="22" height="22" alt="" />
+          Anand's Code
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <div class="nav-item dropdown ms-auto" role="group" aria-label="Toggle dark mode" title="Toggle Dark Mode">
-            <button
-              class="dark-theme-toggle btn btn-outline-light dropdown-toggle"
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-              aria-label="Toggle theme (auto)"
-            >
-              <i class="bi bi-circle-half"></i> <span class="d-lg-none ms-2">Toggle theme</span>
+        <div class="collapse navbar-collapse" id="navbarContent">
+          <div class="ms-auto nav-item dropdown">
+            <button class="dark-theme-toggle btn btn-outline-light theme-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Toggle theme">
+              <i class="bi bi-circle-half"></i>
+              <span class="d-lg-none ms-2">Theme</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li>
-                <button class="dropdown-item" data-bs-theme-value="light">
-                  <i class="me-2 bi bi-sun-fill"></i> Light
-                </button>
-              </li>
-              <li>
-                <button class="dropdown-item" data-bs-theme-value="dark">
-                  <i class="me-2 bi bi-moon-stars-fill"></i> Dark
-                </button>
-              </li>
-              <li>
-                <button class="dropdown-item" data-bs-theme-value="auto">
-                  <i class="me-2 bi bi-circle-half"></i> Auto
-                </button>
-              </li>
+              <li><button class="dropdown-item" data-bs-theme-value="light"><i class="bi bi-sun-fill me-2"></i>Light</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="bi bi-moon-stars-fill me-2"></i>Dark</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="bi bi-circle-half me-2"></i>Auto</button></li>
             </ul>
           </div>
         </div>
       </div>
     </nav>
 
-    <div class="container-fluid my-4">
+    <div class="container-fluid px-3 px-md-4">
       <!-- #DEMOS# -->
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" type="module"></script>
     <script src="https://cdn.jsdelivr.net/npm/@gramex/ui@0.3/dist/dark-theme.js" type="module"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // Time filter helper
-        const isWithinTime = (date, filter) => {
-          const now = new Date();
-          const itemDate = new Date(date);
-          const filters = {
-            week: () => itemDate > new Date(now.setDate(now.getDate() - 7)),
-            month: () => itemDate > new Date(now.setMonth(now.getMonth() - 1)),
-            all: () => true,
-            default: (year) => itemDate.getFullYear() === parseInt(year),
-          };
-          return (filters[filter] || filters.default)(filter);
+        // Shadow on filter bar when it sticks below navbar
+        const filterBar = document.querySelector(".filter-bar");
+        if (filterBar) {
+          const sentinel = document.createElement("div");
+          filterBar.before(sentinel);
+          new IntersectionObserver(([e]) => filterBar.classList.toggle("shadowed", !e.isIntersecting)).observe(sentinel);
+        }
+
+        // Cache card metadata once (avoids repeated JSON.parse + dataset access)
+        const cards = [...document.querySelectorAll(".repo-card")].map((el) => ({
+          el,
+          topics: JSON.parse(el.dataset.topics),
+          updated: el.dataset.updated,
+          created: el.dataset.created,
+          name: el.dataset.name,
+          desc: el.dataset.desc,
+          stars: +el.dataset.stars,
+        }));
+
+        const state = { search: "", topics: new Set(), updated: "all", created: "all", sort: "updated" };
+
+        const withinTime = (dateStr, filter) => {
+          if (filter === "all") return true;
+          const d = new Date(dateStr), now = new Date();
+          if (filter === "week") return d > new Date(+now - 7 * 864e5);
+          if (filter === "month") { const c = new Date(now); c.setMonth(c.getMonth() - 1); return d > c; }
+          return new Date(dateStr).getFullYear() === +filter;
         };
 
-        // Get current filter state
-        const getFilters = () => ({
-          topics: [...document.querySelectorAll(".topic-filter:checked")].map((cb) => cb.value),
-          updated: document.querySelector(".updated-filter:checked").value,
-          created: document.querySelector(".created-filter:checked").value,
+        // Match a card against all filters, optionally skipping one (for accurate per-chip counts)
+        const matches = (c, skip = null) => {
+          if (skip !== "search" && state.search && !c.name.includes(state.search) && !c.desc.includes(state.search)) return false;
+          if (skip !== "topics" && state.topics.size && !c.topics.some((t) => state.topics.has(t))) return false;
+          if (skip !== "updated" && !withinTime(c.updated, state.updated)) return false;
+          if (skip !== "created" && !withinTime(c.created, state.created)) return false;
+          return true;
+        };
+
+        const grid = document.getElementById("card-grid");
+        const visibleCountEl = document.getElementById("visible-count");
+        const emptyState = document.getElementById("empty-state");
+        const clearBtn = document.getElementById("clear-filters");
+        const updatedSel = document.getElementById("updated-select");
+        const createdSel = document.getElementById("created-select");
+        const chipRow = document.getElementById("chip-row");
+
+        const setChipActive = (chip, active) => {
+          chip.classList.toggle("is-active", active);
+          chip.setAttribute("aria-pressed", active);
+        };
+
+        const update = () => {
+          const sorters = {
+            stars:   (a, b) => b.stars - a.stars,
+            updated: (a, b) => new Date(b.updated) - new Date(a.updated),
+            created: (a, b) => new Date(b.created) - new Date(a.created),
+            name:    (a, b) => a.name.localeCompare(b.name),
+          };
+          const sorted = [...cards].sort(sorters[state.sort] || sorters.updated);
+
+          let visible = 0;
+          sorted.forEach((c) => {
+            const show = matches(c);
+            c.el.hidden = !show;
+            if (show) visible++;
+            grid.appendChild(c.el);
+          });
+
+          visibleCountEl.textContent = visible;
+          emptyState.style.display = visible ? "none" : "";
+
+          // Chip counts: exclude topic filter so each chip shows how many *would* match
+          chipRow.querySelectorAll(".chip").forEach((chip) => {
+            const topic = chip.dataset.topic;
+            const count = cards.filter((c) =>
+              matches(c, "topics") && (topic === "" || c.topics.includes(topic))
+            ).length;
+            const badge = chip.querySelector(".chip-count");
+            badge.textContent = count;
+            badge.hidden = count === 0 && topic !== "";
+          });
+
+          updatedSel.classList.toggle("is-active", state.updated !== "all");
+          createdSel.classList.toggle("is-active", state.created !== "all");
+          const hasFilters = state.search || state.topics.size || state.updated !== "all" || state.created !== "all";
+          clearBtn.style.display = hasFilters ? "" : "none";
+        };
+
+        document.getElementById("search-input").addEventListener("input", (e) => {
+          state.search = e.target.value.toLowerCase().trim();
+          update();
         });
 
-        // Check if a card matches filters
-        const matchesFilters = (card, excludeFilter = null) => {
-          const { topics: selectedTopics, updated: updatedFilter, created: createdFilter } = getFilters();
-          const cardTopics = JSON.parse(card.dataset.topics);
+        document.getElementById("sort-select").addEventListener("change", (e) => {
+          state.sort = e.target.value;
+          update();
+        });
 
-          const checks = {
-            topics: () => selectedTopics.length === 0 || cardTopics.some((topic) => selectedTopics.includes(topic)),
-            updated: () => isWithinTime(card.dataset.updated, updatedFilter),
-            created: () => isWithinTime(card.dataset.created, createdFilter),
-          };
+        updatedSel.addEventListener("change", (e) => { state.updated = e.target.value; update(); });
+        createdSel.addEventListener("change", (e) => { state.created = e.target.value; update(); });
 
-          return Object.entries(checks)
-            .filter(([key]) => key !== excludeFilter)
-            .every(([, check]) => check());
-        };
+        chipRow.addEventListener("click", (e) => {
+          const chip = e.target.closest(".chip");
+          if (!chip) return;
+          const topic = chip.dataset.topic;
+          const allChip = chipRow.querySelector('.chip[data-topic=""]');
+          if (topic === "") {
+            state.topics.clear();
+            chipRow.querySelectorAll(".chip").forEach((c) => setChipActive(c, false));
+            setChipActive(allChip, true);
+          } else {
+            setChipActive(allChip, false);
+            const nowActive = !chip.classList.contains("is-active");
+            setChipActive(chip, nowActive);
+            state.topics[nowActive ? "add" : "delete"](topic);
+            if (!state.topics.size) setChipActive(allChip, true);
+          }
+          update();
+        });
 
-        // Update count badge
-        const updateBadge = (element, count) => {
-          const badge = element.parentElement.querySelector(".count");
-          badge.textContent = count || "";
-          badge.style.display = count ? "" : "none";
-        };
+        // Topic pills on cards — click to filter to just that topic
+        document.addEventListener("click", (e) => {
+          const pill = e.target.closest(".topic-pill");
+          if (!pill) return;
+          e.stopPropagation();
+          const topic = pill.dataset.topic;
+          state.topics.clear();
+          state.topics.add(topic);
+          chipRow.querySelectorAll(".chip").forEach((c) => setChipActive(c, false));
+          const target = chipRow.querySelector(`.chip[data-topic="${topic}"]`);
+          if (target) setChipActive(target, true);
+          update();
+        });
 
-        // Update filter counts
-        const updateCounts = () => {
-          const cards = [...document.querySelectorAll(".repo-card")];
+        clearBtn.addEventListener("click", () => {
+          state.search = ""; state.topics.clear(); state.updated = "all"; state.created = "all";
+          document.getElementById("search-input").value = "";
+          updatedSel.value = "all"; createdSel.value = "all";
+          chipRow.querySelectorAll(".chip").forEach((c) => setChipActive(c, false));
+          setChipActive(chipRow.querySelector('.chip[data-topic=""]'), true);
+          update();
+        });
 
-          // Update topic counts
-          document.querySelectorAll(".topic-filter").forEach((cb) => {
-            const count = cards.filter((card) => {
-              const cardTopics = JSON.parse(card.dataset.topics);
-              return cardTopics.includes(cb.value) && matchesFilters(card, "topics");
-            }).length;
-            updateBadge(cb, count);
-          });
+        // Disable fade-in after first render so sort/filter don't re-animate
+        grid.addEventListener("animationend", () => { grid.style.animation = "none"; }, { once: true });
 
-          // Update date filter counts
-          ["updated", "created"].forEach((type) => {
-            document.querySelectorAll(`.${type}-filter`).forEach((radio) => {
-              if (radio.value === "all") return;
-              const count = cards.filter(
-                (card) => isWithinTime(card.dataset[type], radio.value) && matchesFilters(card, type)
-              ).length;
-              updateBadge(radio, count);
-            });
-          });
-        };
-
-        // Update card visibility
-        const updateVisibility = () => {
-          document.querySelectorAll(".repo-card").forEach((card) => {
-            card.style.display = matchesFilters(card) ? "" : "none";
-          });
-          updateCounts();
-        };
-
-        // Add event listeners
-        document
-          .querySelectorAll(".topic-filter, .updated-filter, .created-filter")
-          .forEach((filter) => filter.addEventListener("change", updateVisibility));
-
-        // Initial update
-        updateCounts();
+        update();
       });
     </script>
   </body>
