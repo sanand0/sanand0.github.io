@@ -3,25 +3,39 @@ import { readFileSync, writeFileSync } from "fs";
 const escHtml = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// Deterministic topic → hue mapping
+const TOPIC_HUES = {
+  "llm":                270,  // violet
+  "app":                205,  // sky-blue
+  "data":               155,  // teal-green
+  "tool":                35,  // amber
+  "library":            330,  // pink
+  "data-visualization": 195,  // azure
+  "education":           22,  // orange
+  "talk":               285,  // purple
+  "excel":              130,  // green
+  "notes":              215,  // slate
+  "s-anand":            240,  // indigo
+  "(other)":            220,  // blue-gray
+};
+const hue = (name) => TOPIC_HUES[name] ?? 240;
+
 const processRepos = (repos) =>
   repos
-    .filter((repo) => repo.visibility === "PUBLIC")
-    .map((repo) => {
-      if (!repo.repositoryTopics?.length) repo.repositoryTopics = [{ name: "(other)" }];
-      return repo;
-    })
+    .filter((r) => r.visibility === "PUBLIC")
+    .map((r) => { if (!r.repositoryTopics?.length) r.repositoryTopics = [{ name: "(other)" }]; return r; })
     .sort((a, b) => new Date(b.pushedAt) - new Date(a.pushedAt));
 
 const extractTopics = (repos) =>
-  [...new Set(repos.flatMap((repo) => repo.repositoryTopics?.map((t) => t.name) || []))];
+  [...new Set(repos.flatMap((r) => r.repositoryTopics?.map((t) => t.name) || []))];
 
 const getYearOptions = (dates) =>
   [...new Set(dates.map((d) => new Date(d).getFullYear()))].sort((a, b) => b - a);
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short" });
+const formatDate = (d) =>
+  new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short" });
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Data ─────────────────────────────────────────────────────────────────────
 const repos      = processRepos(JSON.parse(readFileSync(".repos.json", "utf-8")));
 const icons      = JSON.parse(readFileSync("icons.json", "utf-8"));
 const allTopics  = extractTopics(repos);
@@ -29,20 +43,20 @@ const updateYears = getYearOptions(repos.map((r) => r.pushedAt));
 const createYears = getYearOptions(repos.map((r) => r.createdAt));
 const totalStars  = repos.reduce((s, r) => s + r.stargazerCount, 0);
 
-// "Recent" = pushed within 14 days of the latest push in the dataset
-const maxPushedAt   = Math.max(...repos.map((r) => +new Date(r.pushedAt)));
-const recentCutoff  = new Date(maxPushedAt - 14 * 864e5);
-const isRecent = (date) => new Date(date) > recentCutoff;
+const maxPushedAt  = Math.max(...repos.map((r) => +new Date(r.pushedAt)));
+const recentCutoff = new Date(maxPushedAt - 14 * 864e5);
+const isRecent = (d) => new Date(d) > recentCutoff;
 
 // ── Card generator ────────────────────────────────────────────────────────────
 const generateRepoCard = (repo) => {
-  const iconUrl    = icons[repo.name];
-  const url        = `https://github.com/sanand0/${repo.name}`;
+  const iconUrl     = icons[repo.name];
+  const url         = `https://github.com/sanand0/${repo.name}`;
   const homepageUrl = repo.homepageUrl || url;
-  const topics     = repo.repositoryTopics || [];
-  const desc       = escHtml(repo.description || "");
-  const hot        = repo.stargazerCount >= 50;
-  const recent     = isRecent(repo.pushedAt);
+  const topics      = repo.repositoryTopics || [];
+  const primaryHue  = hue(topics[0]?.name);
+  const desc        = escHtml(repo.description || "");
+  const hot         = repo.stargazerCount >= 50;
+  const recent      = isRecent(repo.pushedAt);
 
   const iconHtml = iconUrl
     ? `<img src="${iconUrl}" class="repo-icon" alt="" loading="lazy" width="22" height="22">`
@@ -53,7 +67,7 @@ const generateRepoCard = (repo) => {
     : "";
 
   return `
-  <div class="col repo-card"${hot ? ' data-hot=""' : ""}
+  <div class="repo-card"${hot ? ' data-hot=""' : ""} style="--hue:${primaryHue}"
        data-topics='${JSON.stringify(topics.map((t) => t.name))}'
        data-updated="${repo.pushedAt}"
        data-created="${repo.createdAt}"
@@ -65,7 +79,7 @@ const generateRepoCard = (repo) => {
         <div class="d-flex align-items-start gap-2 mb-2">
           <div class="icon-wrap">${iconHtml}</div>
           <div class="flex-grow-1 min-w-0">
-            <div class="d-flex align-items-center gap-1 flex-wrap">
+            <div class="d-flex align-items-center gap-1 flex-wrap mb-1">
               <a href="${homepageUrl}" class="card-name">${escHtml(repo.name)}</a>
               ${recentBadge}
             </div>
@@ -73,29 +87,29 @@ const generateRepoCard = (repo) => {
           </div>
         </div>
         <div class="d-flex flex-wrap gap-1 mt-2">
-          ${topics.map((t) => `<button class="topic-pill" data-topic="${escHtml(t.name)}">${escHtml(t.name)}</button>`).join("")}
+          ${topics.map((t) => `<button class="topic-pill" style="--hue:${hue(t.name)}" data-topic="${escHtml(t.name)}">${escHtml(t.name)}</button>`).join("")}
         </div>
       </div>
-      <div class="card-footer d-flex justify-content-between align-items-center gap-1">
-        <a href="${url}" class="text-nowrap">${formatDate(repo.createdAt)}</a>
+      <div class="card-footer d-flex justify-content-between align-items-center gap-2">
+        <span class="text-nowrap text-body-secondary">${formatDate(repo.createdAt)}</span>
         <a href="${url}/stargazers" class="star-count">
-          <i class="bi bi-star-fill" aria-hidden="true"></i> ${repo.stargazerCount}
+          <i class="bi bi-star-fill" aria-hidden="true"></i>${repo.stargazerCount}
         </a>
-        <a href="${url}" class="text-nowrap text-end">${formatDate(repo.pushedAt)}</a>
+        <span class="text-nowrap text-body-secondary text-end">${formatDate(repo.pushedAt)}</span>
       </div>
     </div>
   </div>`;
 };
 
-// ── Hero (full-width, outside container) ─────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────────────────────────
 const heroHtml = `<div class="hero" role="banner">
   <div class="container-fluid px-3 px-md-4">
     <div class="hero-inner">
       <div class="row align-items-center gy-4">
         <div class="col-lg-7">
-          <p class="hero-eyebrow">Open source · GitHub</p>
+          <p class="hero-eyebrow">Open source \u00b7 GitHub</p>
           <h1 class="hero-title">Code by <span class="gradient-text">Anand S</span></h1>
-          <p class="hero-sub">Data tools, LLM experiments, visualizations, and utilities — built in public.</p>
+          <p class="hero-sub">Data tools, LLM experiments, visualizations, and utilities \u2014 built in public.</p>
         </div>
         <div class="col-lg-5 d-flex justify-content-lg-end align-items-center">
           <div class="hero-stats">
@@ -120,12 +134,12 @@ const heroHtml = `<div class="hero" role="banner">
   </div>
 </div>`;
 
-// ── Main content (inside container) ──────────────────────────────────────────
+// ── Main content ──────────────────────────────────────────────────────────────
 const mainHtml = `
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 stats-row">
     <div>
       <span id="visible-count">${repos.length}</span>
-      <span class="text-body-secondary"> of ${repos.length} projects &nbsp;&middot;&nbsp; </span>
+      <span class="text-body-secondary"> of ${repos.length} projects \u00a0\u00b7\u00a0 </span>
       <span class="total-stars"><i class="bi bi-star-fill me-1" aria-hidden="true"></i>${totalStars.toLocaleString()} stars</span>
     </div>
     <button class="btn btn-sm clear-btn" id="clear-filters" style="display:none">
@@ -141,7 +155,7 @@ const mainHtml = `
                placeholder="Search projects\u2026" autocomplete="off" aria-label="Search projects">
       </div>
       <select class="pill-select" id="sort-select" aria-label="Sort by">
-        <option value="updated">\u27F3 Recent</option>
+        <option value="updated">\u27f3 Recent</option>
         <option value="stars">\u2605 Stars</option>
         <option value="created">\u2295 Created</option>
         <option value="name">A\u2013Z Name</option>
@@ -161,12 +175,12 @@ const mainHtml = `
       <button class="chip is-active" data-topic="" aria-pressed="true">
         All <span class="chip-count">${repos.length}</span>
       </button>
-      ${allTopics.map((t) => `<button class="chip" data-topic="${escHtml(t)}" aria-pressed="false">${escHtml(t)} <span class="chip-count"></span></button>`).join("")}
+      ${allTopics.map((t) => `<button class="chip" style="--hue:${hue(t)}" data-topic="${escHtml(t)}" aria-pressed="false">${escHtml(t)} <span class="chip-count"></span></button>`).join("")}
     </div>
   </div>
 
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3 py-3" id="card-grid">
-    ${repos.map((repo) => generateRepoCard(repo)).join("")}
+  <div class="card-grid" id="card-grid">
+    ${repos.map((r) => generateRepoCard(r)).join("")}
   </div>
 
   <div id="empty-state" style="display:none">
@@ -175,9 +189,7 @@ const mainHtml = `
     <p class="mb-0 small">Try different filters or clear your search</p>
   </div>`;
 
-// ── Write output ──────────────────────────────────────────────────────────────
+// ── Write ─────────────────────────────────────────────────────────────────────
 const template = readFileSync("template.html", "utf-8");
-const result   = template
-  .replace(/<!-- #HERO# -->/, heroHtml)
-  .replace(/<!-- #DEMOS# -->/, mainHtml);
-writeFileSync("index.html", result);
+writeFileSync("index.html",
+  template.replace(/<!-- #HERO# -->/, heroHtml).replace(/<!-- #DEMOS# -->/, mainHtml));
